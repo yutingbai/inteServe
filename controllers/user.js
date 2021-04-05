@@ -1,4 +1,6 @@
+var dbConfig = require('../util/dbconfig')
 var { Email, SetCrypto } = require('../util/config');
+let fs = require('fs');
 const dbconfig = require('../util/dbconfig');
 //邮箱验证码
 const verify = (req, res, next) => {
@@ -134,13 +136,51 @@ const login = async (req, res, next) => {
 
     }
 }
-//get
-var logout = async (req,res,next)=>{
+//get 退出
+const logout = async (req, res, next) => {
     req.session.username = '';
-	res.send({
-		msg : '退出成功',
-		status : 0
-	});
+    res.send({
+        msg: '退出成功',
+        status: 0
+    });
+}
+
+//post 修改头像
+const editImg = (req, res) => {
+    if (req.file.length === 0) {
+        res.render('error', { message: '上传文件不能为空！' });
+        return;
+    }
+    let file = req.file;
+    console.log(file);
+    fs.renameSync('./public/uploads/' + file.filename, './public/uploads/' + file.originalname);
+    res.set({
+        'content-type': 'application/JSON; charset=utf-8'
+    })
+
+    let { user_id } = req.query;
+    let imgUrl = 'http://localhost:3000/public/uploads/' + file.originalname;
+    let sql = `update users set user_pic=? where user_id=?`;
+    let sqlArr = [imgUrl, user_id];
+    dbConfig.sqlConnect(sql, sqlArr, (err, data) => {
+        if (err) {
+            console.log(err);
+            throw '出错了';
+        } else {
+            if (data.affectedRows == 1) {
+                res.send({
+                    code: 200,
+                    msg: '修改成功',
+                    url: imgUrl
+                })
+            } else {
+                res.send({
+                    code: 400,
+                    msg: '修改失败'
+                })
+            }
+        }
+    })
 }
 
 
@@ -148,5 +188,6 @@ module.exports = {
     verify,
     signup,
     login,
-    logout
+    logout,
+    editImg
 };
