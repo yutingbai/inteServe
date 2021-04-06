@@ -1,9 +1,8 @@
 var dbConfig = require('../util/dbconfig')
 var fs = require('fs');
-const { title } = require('process');
+const { syncDependent } = require('./xfyun');
 
 let uploadMoreImg = (req, res) => {
-    console.log('------------------------')
     if (req.files.length === 0) {
         res.render('error', { message: '上传文件不能为空！' });
     } else {
@@ -22,7 +21,6 @@ let uploadMoreImg = (req, res) => {
             } else {
                 sql += '(?),'
             }
-            console.log(sql);
             sqlArr.push([url, user_id, post_id])
         }
         //批量存储到数据库
@@ -30,7 +28,6 @@ let uploadMoreImg = (req, res) => {
             if (err) {
                 console.log(err);
             } else {
-                console.log(data.affectedRows);
                 if (data.affectedRows > 0) {
                     res.send({
                         code: 200,
@@ -47,19 +44,44 @@ let uploadMoreImg = (req, res) => {
         })
     }
 }
+const saveKeyword = async (text, userId, postId) => {
+    let keyWords = await syncDependent(text)
+    console.log(keyWords)
+    let sql = 'insert ignore into keyword (keyword) values (?)'
+    let freshSql = 'update keyword set hot = hot + 1 where keyword=?'
+    keyWords.map(async (item) => {
+        if (Number(item.score) > 0.55) {
+            let userResult = await dbConfig.SySqlConnect('insert ignore into post_keyword (keyword , user_id , post_id) values (?,?,?)', [item.word, userId, postId])
+            var sqlArr = [item.word]
+            let result = await dbConfig.SySqlConnect(sql, sqlArr).then(res => {
+                return res.insertId;
+            }).catch(err => {
+                return false;
+            })
+            if (result === 0) {
+                let res = await dbConfig.SySqlConnect(freshSql, [item.word])
+            }
+            if (userResult === 0) {
+                let res = await dbConfig.SySqlConnect('update post_keyword set hot = hot + 1 where keyword=? and userid=?', [item.word, userId])
+            }
+        }
 
+    })
+};
 const publish = async (req, res) => {
     let { user_id, title, pic, details } = req.body;
-    console.log(req.body)
+    const text = title + details;
+    // let keyWords = await syncDependent(text)
+    // console.log(keyWords)
     let sql = 'insert into post (user_id,title,pic,details) values (?,?,?,?)';
     let sqlArr = [user_id, title, pic, details];
     let post_id = await dbConfig.SySqlConnect(sql, sqlArr).then(res => {
-        console.log(res);
         return res.insertId;
     }).catch(err => {
         return false;
     })
     if (post_id) {
+        saveKeyword(text, user_id, post_id)
         res.send({
             code: 200,
             msg: '发布成功'
@@ -71,8 +93,6 @@ const publish = async (req, res) => {
         })
     }
 }
-var dbConfig = require('../util/dbconfig');
-
 //检查用户是否关注
 const checkFollow = async (user_id, follow_id, follow_type) => {
     let sql = `select * from follow where user_id=? and follow_id=? and follow_type=?`;
@@ -156,9 +176,29 @@ const unfollow = async (req, res) => {
 
 
 }
+
+//关键词推荐
+const pushKeyWord = async (req,res) => {
+    const num = req.query.num || 6
+    let sql = ` select * from keyword order by hot desc`
+    let sqlArr = [];
+    let result = await dbConfig.SySqlConnect(sql, sqlArr);
+    if (result) {
+        res.send({
+            data: result.slice(0,num)
+        })
+    } else {
+        res.send({
+            data: 'errpr'
+        })
+    }
+}
+
+
 module.exports = {
     uploadMoreImg,
     publish,
     follow,
-    unfollow
+    unfollow,
+    pushKeyWord
 }

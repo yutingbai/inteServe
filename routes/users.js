@@ -19,4 +19,6 @@ router.post('/publish', indexController.publish)
 
 router.get('/follow', indexController.follow);
 router.get('/unfollow', indexController.unfollow);
+
+router.get('/keyword',indexController.pushKeyWord)
 module.exports = router;
