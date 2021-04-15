@@ -108,26 +108,20 @@ const getUserInfo = (userId) => {
 //post 登录
 const login = async (req, res, next) => {
     var { username, password } = req.body;
-    // if (verifyImg !== req.session.verifyImg) {
-    //     res.send({
-    //         msg: '验证码输入不正确',
-    //         status: -3
-    //     });
-    //     return;
-    // }
     let sql = `select * from users where user_email=? and user_pass=? or user_name=? and user_pass=?`;
     let sqlArr = [username, SetCrypto(password), username, SetCrypto(password)]
     var result = await dbConfig.SySqlConnect(sql, sqlArr)
     console.log(result)
-
     if (result.length === 0) {
         res.send({
             msg: '用户名或密码错误，登录失败',
             status: -1
         });
     } else {
-        req.session.userId = result.user_id;
-        result[0].userInfo = await getUserInfo(result[0].user_id)
+        res.cookie('username',result[0].user_id);
+        res.cookie('username',result[0].user_name);
+        req.session.userId = result[0].user_id;
+        result[0].userInfo = await getUserInfo(result[0].user_id);
         res.send({
             msg: '登录成功',
             status: 0,

@@ -48,9 +48,53 @@ var deleteUser = async (req, res, next) => {
     }
 }
 
+var postList = async (req, res) => {
+    var sql = 'select * from post';
+    var sqlArr = [];
+    let result =await dbConfig.SySqlConnect(sql, sqlArr)
+    if (result.length) {
+        res.send({
+            msg: '所有问题信息',
+            status: 0,
+            data: result
+            
+        });
+    }
+    else {
+        res.send({
+            msg: '获取信息失败',
+            status: -1
+        });
+    }
+
+}
+
+var deletePost = async (req, res, next) => {
+    var { id} = req.body;
+    var sql = `DELETE FROM post WHERE id = ?`
+    var sqlArr=[id]
+    let result = await dbConfig.SySqlConnect(sql , sqlArr);
+    if (result.affectedRows) {
+        res.send({
+            msg: '删除操作成功',
+            status: 0
+        });
+    }
+    else {
+        res.send({
+            msg: '未发现可删除id',
+            status: -1
+        });
+    }
+}
+
+
+
 
 module.exports = {
     index,
     usersList,
-    deleteUser
+    deleteUser,
+    postList,
+    deletePost
 };
