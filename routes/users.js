@@ -14,11 +14,13 @@ router.post('/Login', userController.login);
 router.post('/Logout', userController.logout)
 
 router.post('/editImg', uplode, userController.editImg)
-router.post('/editMoreImg', moreUplode, indexController.uploadMoreImg)
+router.post('/editMoreImg', uplode, indexController.uploadMoreImg)
 router.post('/publish', indexController.publish)
 
 router.get('/follow', indexController.follow);
 router.get('/unfollow', indexController.unfollow);
 
 router.get('/keyword',indexController.pushKeyWord)
+
+router.get('/userInfo',userController.userInfo)
 module.exports = router;

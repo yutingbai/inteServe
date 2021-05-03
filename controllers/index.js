@@ -3,46 +3,39 @@ var fs = require('fs');
 const { syncDependent } = require('./xfyun');
 
 let uploadMoreImg = (req, res) => {
-    if (req.files.length === 0) {
+    if (req.file.length === 0) {
         res.render('error', { message: '上传文件不能为空！' });
-    } else {
-        let sql = `insert into image (url,user_id,post_id) values `;
-        let sqlArr = [];
-        for (var i in req.files) {
-            res.set({
-                'content-type': 'application/json; charset=utf8'
-            });
-            let file = req.files[i];
-            fs.renameSync('./public/uploads/' + file.filename, './public/uploads/' + file.originalname);
-            let { user_id, post_id } = req.query;
-            let url = 'http://localhost:3000/uploads/' + file.originalname;
-            if (req.files.length - 1 == i) {
-                sql += '(?)'
-            } else {
-                sql += '(?),'
-            }
-            sqlArr.push([url, user_id, post_id])
-        }
-        //批量存储到数据库
-        dbConfig.sqlConnect(sql, sqlArr, (err, data) => {
-            if (err) {
-                console.log(err);
-            } else {
-                if (data.affectedRows > 0) {
-                    res.send({
-                        code: 200,
-                        affectedRows: data.affectedRows,
-                        msg: '上传成功'
-                    });
-                } else {
-                    res.send({
-                        code: 400,
-                        msg: '上传失败'
-                    });
-                }
-            }
-        })
+        return;
     }
+    let file = req.file;
+    console.log(file);
+    fs.renameSync('./public/uploads/' + file.filename, './public/uploads/' + file.originalname);
+    res.set({
+        'content-type': 'application/JSON; charset=utf-8'
+    })
+
+    let imgUrl = 'http://localhost:3000/public/uploads/' + file.originalname;
+    let sql = `INSERT INTO image (url) VALUES(?)`;
+    let sqlArr = [imgUrl];
+    dbConfig.sqlConnect(sql, sqlArr, (err, data) => {
+        if (err) {
+            console.log(err);
+            throw '出错了';
+        } else {
+            if (data.affectedRows == 1) {
+                res.send({
+                    code: 200,
+                    msg: '上传成功',
+                    data: imgUrl
+                })
+            } else {
+                res.send({
+                    code: 400,
+                    msg: '上传失败'
+                })
+            }
+        }
+    })
 }
 const saveKeyword = async (text, userId, postId) => {
     let keyWords = await syncDependent(text)
