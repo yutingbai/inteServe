@@ -118,8 +118,8 @@ const login = async (req, res, next) => {
             status: -1
         });
     } else {
-        res.cookie('username',result[0].user_id);
-        res.cookie('username',result[0].user_name);
+        res.cookie('userid', result[0].user_id);
+        res.cookie('username', result[0].user_name);
         req.session.userId = result[0].user_id;
         result[0].userInfo = await getUserInfo(result[0].user_id);
         res.send({
@@ -177,11 +177,32 @@ const editImg = (req, res) => {
     })
 }
 
+const userInfo = async (req, res, next) => {
+    var { id } = req.query;
+    let sql = `select * from users where user_id=?`;
+    let sqlArr = [id]
+    var result = await dbConfig.SySqlConnect(sql, sqlArr)
+    console.log(result)
+    if (result.length === 0) {
+        res.send({
+            msg: '失败',
+            status: -1
+        });
+    } else {
+        result[0].userInfo = await getUserInfo(result[0].user_id);
+        res.send({
+            status: 0,
+            data: result[0]
+        });
+
+    }
+}
 
 module.exports = {
     verify,
     signup,
     login,
     logout,
-    editImg
+    editImg,
+    userInfo
 };
