@@ -6,4 +6,5 @@ router.get('/Userslist', adminControllers.usersList);
 router.post('/DeleteUser' , adminControllers.deleteUser)
 router.get('/Postslist', adminControllers.postList);
 router.post('/Deletepost' , adminControllers.deletePost)
+router.post('/searchUser' , adminControllers.searchUser)
 module.exports = router;

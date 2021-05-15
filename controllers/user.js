@@ -101,7 +101,7 @@ const creatUserInfo = (userId) => {
 }
 //获取用户详情
 const getUserInfo = (userId) => {
-    let sql = `select user_gender,user_class from userinfo where user_id=?`
+    let sql = `select * from userinfo where user_id=?`
     let sqlArr = [userId]
     return dbConfig.SySqlConnect(sql, sqlArr);
 }
@@ -120,6 +120,7 @@ const login = async (req, res, next) => {
     } else {
         res.cookie('userid', result[0].user_id);
         res.cookie('username', result[0].user_name);
+        res.cookie('userPic', result[0].user_pic);
         req.session.userId = result[0].user_id;
         result[0].userInfo = await getUserInfo(result[0].user_id);
         res.send({
@@ -133,6 +134,9 @@ const login = async (req, res, next) => {
 //get 退出
 const logout = async (req, res, next) => {
     req.session.username = '';
+    res.clearCookie('userid');
+    res.clearCookie('username');
+    res.clearCookie('userPic');
     res.send({
         msg: '退出成功',
         status: 0
