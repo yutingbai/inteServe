@@ -4,6 +4,7 @@ var express = require('express');
 var router = express.Router();
 var userController = require('../controllers/user')
 var indexController = require('../controllers/index')
+var uploadController = require('../controllers/upload')
 
 let uplode = multer({ dest: './public/uploads/' }).single('file')
 let moreUplode = multer({ dest: './public/uploads/' }).array('file', 5)
@@ -15,7 +16,13 @@ router.post('/Logout', userController.logout)
 
 router.post('/editImg', uplode, userController.editImg)
 router.post('/editMoreImg', uplode, indexController.uploadMoreImg)
+router.post('/uplodeFile', uplode, uploadController.uploadsFile)
+router.get('/getfileType',uploadController.getfileType)
+router.get('/getAllFile' , uploadController.getAllFile)
 router.post('/publish', indexController.publish)
+router.get('/deleteFile',uploadController.deleteFile)
+router.post('/uploadsStore',uploadController.uploadsStore)
+
 
 router.get('/follow', indexController.follow);
 router.get('/unfollow', indexController.unfollow);
